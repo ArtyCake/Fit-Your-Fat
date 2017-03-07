@@ -1,4 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -9,8 +10,84 @@
                 tools:context="com.artycake.fityourfat.MainActivity$PlaceholderFragment">
 
     <TextView
-        android:id="@+id/section_label"
+        android:id="@+id/exercise_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/timer_container"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        tools:text="Lift Up"
+        />
+
+
+    <android.support.percent.PercentRelativeLayout
+        android:id="@+id/timer_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="@dimen/main_timer_margin"
+        >
+
+        <com.github.lzyzsd.circleprogress.DonutProgress
+            android:id="@+id/timer_progress"
+            android:background="@drawable/timer_bar_background"
+            android:rotation="270"
+            app:donut_finished_color="@color/colorAccent"
+            app:donut_finished_stroke_width="@dimen/main_bar_stroke_width"
+            app:donut_max="100"
+            app:donut_progress="30"
+            app:donut_text_size="0sp"
+            app:donut_unfinished_color="@color/colorWindowBackground"
+            app:layout_aspectRatio="100%"
+            app:layout_widthPercent="100%"/>
+
+        <android.support.percent.PercentRelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:padding="40dp"
+            >
+
+            <TextView
+                android:id="@+id/timer_text"
+                android:background="@drawable/timer_text_background"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                android:textSize="@dimen/main_timer_text_size"
+                android:textStyle="bold"
+                app:layout_aspectRatio="100%"
+                app:layout_widthPercent="100%"
+                tools:text="10:45"/>
+        </android.support.percent.PercentRelativeLayout>
+
+    </android.support.percent.PercentRelativeLayout>
+
+    <android.support.v7.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/start_stop_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/main_btn_margin"
+            android:layout_marginRight="@dimen/main_btn_margin"
+            android:layout_weight="1"
+            android:text="@string/main_start_btn"/>
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/pause_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/main_btn_margin"
+            android:layout_marginStart="@dimen/main_btn_margin"
+            android:layout_weight="1"
+            android:text="@string/main_pause_btn"/>
+
+    </android.support.v7.widget.LinearLayoutCompat>
+
 
 </RelativeLayout>
