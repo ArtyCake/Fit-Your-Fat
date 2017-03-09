@@ -1,4 +1,4 @@
-package com.artycake.fityourfat;
+package com.artycake.fityourfat.activities;
 
 import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.artycake.fityourfat.R;
 import com.artycake.fityourfat.adapters.MainFragmentsAdapter;
 
 public class MainActivity extends AppCompatActivity {

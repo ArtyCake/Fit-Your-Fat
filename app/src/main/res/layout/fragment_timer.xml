@@ -7,7 +7,7 @@
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"
                 android:paddingTop="@dimen/activity_vertical_margin"
-                tools:context="com.artycake.fityourfat.MainActivity$PlaceholderFragment">
+                tools:context="com.artycake.fityourfat.activities.MainActivity$PlaceholderFragment">
 
     <TextView
         android:id="@+id/exercise_name"
@@ -79,6 +79,7 @@
             android:text="@string/main_start_btn"/>
 
         <android.support.v7.widget.AppCompatButton
+            android:visibility="gone"
             android:id="@+id/pause_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -5,14 +5,19 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.artycake.fityourfat.MainActivity;
+import com.artycake.fityourfat.activities.MainActivity;
 import com.artycake.fityourfat.R;
+import com.artycake.fityourfat.models.Exercise;
+import com.artycake.fityourfat.models.Workout;
+import com.artycake.fityourfat.utils.TextHelper;
+
+import io.realm.RealmList;
 
 /**
  * Created by artycake on 3/7/17.
@@ -27,19 +32,94 @@ public class TimerService extends Service {
     public static final String ACTION_STOP_TIMER = "com.artycake.fityourfat.action.stoptimer";
     public static final String ACTION_PAUSE_TIMER = "com.artycake.fityourfat.action.pausetimer";
     public static final String ACTION_RESUME_TIMER = "com.artycake.fityourfat.action.resumetimer";
+    public static final String BROADCAST_FILTER = "com.artycake.fityourfat.broadcast.tick";
+
+    public static final String ACTION_TYPE = "action_type";
+    public static final String TIMER_STARTED = "timer_started";
+    public static final String TIMER_STOPPED = "timer_stopped";
+    public static final String TIMER_PAUSED = "timer_paused";
+    public static final String TIMER_RESUMED = "timer_resumed";
+    public static final String UPDATE_EXERCISE = "update_exercise";
+    public static final String UE_NAME = "ue_name";
+    public static final String UE_TIME = "ue_time";
+    public static final String UE_DESC = "ue_desc";
+    public static final String UE_PERCENT = "ue_percent";
 
     private TimerBinder timerBinder;
+    private Handler timerHandler = new Handler();
+    private boolean started = false;
+    private boolean paused = false;
+    private Workout currentWorkout;
+    private Exercise currentExercise;
+    private int timePassed = 0;
+    private int pauseDiff;
+    private long lastTimerTime;
+
+    private Runnable timerRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            lastTimerTime = System.currentTimeMillis();
+            tick();
+            if (isStarted() && !isPaused()) {
+                timerHandler.postDelayed(timerRunnable, 1000);
+            }
+        }
+    };
+
+    private void tick() {
+        if (!isStarted() || isPaused()) {
+            return;
+        }
+        timePassed++;
+        sendExerciseBroadcast();
+        showTickNotification();
+        if (timePassed >= currentExercise.getDuration()) {
+            Exercise next = currentWorkout.nextExercise();
+            if (next == null) {
+                stopTimer(false);
+            } else {
+                currentExercise = next;
+                timePassed = 0;
+            }
+        }
+    }
+
+    private void sendExerciseBroadcast() {
+        String time = TextHelper.formatTime(currentExercise.getDuration() - timePassed);
+        Intent intent = new Intent(BROADCAST_FILTER);
+        intent.putExtra(ACTION_TYPE, UPDATE_EXERCISE);
+        intent.putExtra(UE_TIME, time);
+        intent.putExtra(UE_NAME, currentExercise.getName());
+        intent.putExtra(UE_DESC, currentExercise.getDescription());
+        intent.putExtra(UE_PERCENT, 100 * timePassed / currentExercise.getDuration());
+        sendBroadcast(intent);
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         timerBinder = new TimerBinder();
+        currentWorkout = new Workout();
+        currentWorkout.setName("Tabata");
+        currentWorkout.setLaps(2);
+        currentWorkout.setWarmUpTime(0);
+        currentWorkout.setExercises(new RealmList<Exercise>());
+        Exercise exercise = new Exercise();
+        exercise.setName("Lift Up");
+        exercise.setDuration(10);
+        exercise.setDescription("10 lbs per hand");
+        currentWorkout.getExercises().add(exercise);
+        Exercise secondExercise = new Exercise();
+        secondExercise.setName("Push Through");
+        secondExercise.setDuration(20);
+        currentWorkout.getExercises().add(secondExercise);
+        currentExercise = exercise;
+        sendExerciseBroadcast();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("FORSERVICE", "service started");
-        Log.d("FORSERVICE", intent.getAction());
         switch (intent.getAction()) {
             case ACTION_START_SERVICE: {
                 Log.d("FORSERVICE", "ACTION_START_SERVICE");
@@ -54,18 +134,31 @@ public class TimerService extends Service {
             }
             case ACTION_START_TIMER: {
                 Log.d("FORSERVICE", "ACTION_START_TIMER");
+                sendSimpleBroadcast(TIMER_STARTED);
+                started = true;
+                paused = false;
+                timePassed = -1;
+                timerHandler.postDelayed(timerRunnable, 0);
                 break;
             }
             case ACTION_STOP_TIMER: {
                 Log.d("FORSERVICE", "ACTION_STOP_TIMER");
+                stopTimer(true);
                 break;
             }
             case ACTION_PAUSE_TIMER: {
                 Log.d("FORSERVICE", "ACTION_PAUSE_TIMER");
+                sendSimpleBroadcast(TIMER_PAUSED);
+                paused = true;
+                pauseDiff = (int) (System.currentTimeMillis() - lastTimerTime);
+                showPauseNotification();
                 break;
             }
             case ACTION_RESUME_TIMER: {
                 Log.d("FORSERVICE", "ACTION_RESUME_TIMER");
+                sendSimpleBroadcast(TIMER_RESUMED);
+                paused = false;
+                timerHandler.postDelayed(timerRunnable, 1000 - pauseDiff);
                 break;
             }
         }
@@ -73,25 +166,91 @@ public class TimerService extends Service {
         return START_STICKY;
     }
 
-    private void startTimerService() {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+    private void stopTimer(boolean reset) {
+        sendSimpleBroadcast(TIMER_STOPPED);
+        started = false;
+        paused = false;
+        timePassed = 0;
+        // reset exercise
+        if (reset) {
+            sendExerciseBroadcast();
+            showStartNotification();
+        }
+    }
 
+    private void startTimerService() {
+        showStartNotification();
+    }
+
+    private void showStartNotification() {
         Intent startIntent = new Intent(this, TimerService.class);
         startIntent.setAction(ACTION_START_TIMER);
         PendingIntent startPendingIntent = PendingIntent.getService(this, 0, startIntent, 0);
 
-        Notification notification = new NotificationCompat.Builder(this)
-                .setContentTitle("Workout")
-                .setTicker(getResources().getString(R.string.app_name))
-                .setContentText("Lift Up")
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .addAction(android.R.drawable.ic_media_play, "Start", startPendingIntent)
+        Notification notification = getBaseNotificationBuilder()
+                .addAction(android.R.drawable.ic_media_play, getResources().getString(R.string.main_start_btn), startPendingIntent)
                 .build();
         startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private void showPauseNotification() {
+        Intent resumeIntent = new Intent(this, TimerService.class);
+        resumeIntent.setAction(ACTION_RESUME_TIMER);
+        PendingIntent resumePendingIntent = PendingIntent.getService(this, 0, resumeIntent, 0);
+
+        Intent stopIntent = new Intent(this, TimerService.class);
+        stopIntent.setAction(ACTION_STOP_SERVICE);
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        Notification notification = getBaseNotificationBuilder()
+                .addAction(android.R.drawable.ic_media_pause, getResources().getString(R.string.main_stop_btn), stopPendingIntent)
+                .addAction(android.R.drawable.ic_media_play, getResources().getString(R.string.main_resume_btn), resumePendingIntent)
+                .build();
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private void showTickNotification() {
+        Intent pauseIntent = new Intent(this, TimerService.class);
+        pauseIntent.setAction(ACTION_PAUSE_TIMER);
+        PendingIntent pausePendingIntent = PendingIntent.getService(this, 0, pauseIntent, 0);
+
+        Intent stopIntent = new Intent(this, TimerService.class);
+        stopIntent.setAction(ACTION_STOP_SERVICE);
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        Notification notification = getBaseNotificationBuilder()
+                .addAction(android.R.drawable.ic_media_pause, getResources().getString(R.string.main_stop_btn), stopPendingIntent)
+                .addAction(android.R.drawable.ic_media_pause, getResources().getString(R.string.main_pause_btn), pausePendingIntent)
+                .build();
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private NotificationCompat.Builder getBaseNotificationBuilder() {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        return new NotificationCompat.Builder(this)
+                .setContentTitle(currentExercise.getName())
+                .setContentText(TextHelper.formatTime(currentExercise.getDuration() - timePassed))
+                .setTicker(getResources().getString(R.string.app_name))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true);
+    }
+
+    private void sendSimpleBroadcast(String action) {
+        Intent intent = new Intent(BROADCAST_FILTER);
+        intent.putExtra(ACTION_TYPE, action);
+        sendBroadcast(intent);
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
+
+    public boolean isPaused() {
+        return paused;
     }
 
     @Nullable
