@@ -10,4 +10,5 @@
     <color name="colorDivider">#BDBDBD</color>
     <color name="colorWindowBackground">#263238</color>
     <color name="colorButtonBackground">#303C42</color>
+    <color name="colorExerciseBackground">#161D20</color>
 </resources>

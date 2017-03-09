@@ -5,6 +5,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.artycake.fityourfat.fragments.TimerFragment;
+import com.artycake.fityourfat.fragments.WorkoutsFragment;
 
 /**
  * Created by artycake on 3/7/17.
@@ -17,14 +18,14 @@ public class MainFragmentsAdapter extends FragmentPagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        if (position == 0) {
+        if (position == 1) {
             return new TimerFragment();
         }
-        return null;
+        return new WorkoutsFragment();
     }
 
     @Override
     public int getCount() {
-        return 1;
+        return 2;
     }
 }

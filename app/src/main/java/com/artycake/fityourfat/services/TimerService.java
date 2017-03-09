@@ -4,9 +4,11 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -15,14 +17,15 @@ import com.artycake.fityourfat.activities.MainActivity;
 import com.artycake.fityourfat.R;
 import com.artycake.fityourfat.models.Exercise;
 import com.artycake.fityourfat.models.Workout;
+import com.artycake.fityourfat.utils.RealmController;
 import com.artycake.fityourfat.utils.TextHelper;
+import com.artycake.fityourfat.utils.UserPrefs;
 
 import io.realm.RealmList;
 
 /**
  * Created by artycake on 3/7/17.
  */
-
 public class TimerService extends Service {
 
     private static final int NOTIFICATION_ID = 1;
@@ -44,6 +47,8 @@ public class TimerService extends Service {
     public static final String UE_TIME = "ue_time";
     public static final String UE_DESC = "ue_desc";
     public static final String UE_PERCENT = "ue_percent";
+    public static final String UE_LAPS = "ue_laps";
+    public static final String UE_CURRENT_LAP = "ue_current_lap";
 
     private TimerBinder timerBinder;
     private Handler timerHandler = new Handler();
@@ -51,9 +56,11 @@ public class TimerService extends Service {
     private boolean paused = false;
     private Workout currentWorkout;
     private Exercise currentExercise;
+    private int currentLap = 1;
     private int timePassed = 0;
     private int pauseDiff;
     private long lastTimerTime;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
 
     private Runnable timerRunnable = new Runnable() {
 
@@ -77,10 +84,18 @@ public class TimerService extends Service {
         if (timePassed >= currentExercise.getDuration()) {
             Exercise next = currentWorkout.nextExercise();
             if (next == null) {
-                stopTimer(false);
+                if (currentLap < currentWorkout.getLaps()) {
+                    currentLap++;
+                    currentExercise = currentWorkout.getExercises().first();
+                    timePassed = 0;
+                    sendExerciseBroadcast();
+                } else {
+                    stopTimer(false);
+                }
             } else {
                 currentExercise = next;
                 timePassed = 0;
+                sendExerciseBroadcast();
             }
         }
     }
@@ -93,6 +108,8 @@ public class TimerService extends Service {
         intent.putExtra(UE_NAME, currentExercise.getName());
         intent.putExtra(UE_DESC, currentExercise.getDescription());
         intent.putExtra(UE_PERCENT, 100 * timePassed / currentExercise.getDuration());
+        intent.putExtra(UE_LAPS, currentWorkout.getLaps());
+        intent.putExtra(UE_CURRENT_LAP, currentLap);
         sendBroadcast(intent);
     }
 
@@ -100,22 +117,27 @@ public class TimerService extends Service {
     public void onCreate() {
         super.onCreate();
         timerBinder = new TimerBinder();
-        currentWorkout = new Workout();
-        currentWorkout.setName("Tabata");
-        currentWorkout.setLaps(2);
-        currentWorkout.setWarmUpTime(0);
-        currentWorkout.setExercises(new RealmList<Exercise>());
-        Exercise exercise = new Exercise();
-        exercise.setName("Lift Up");
-        exercise.setDuration(10);
-        exercise.setDescription("10 lbs per hand");
-        currentWorkout.getExercises().add(exercise);
-        Exercise secondExercise = new Exercise();
-        secondExercise.setName("Push Through");
-        secondExercise.setDuration(20);
-        currentWorkout.getExercises().add(secondExercise);
-        currentExercise = exercise;
+        final UserPrefs prefs = UserPrefs.getInstance(this);
+        final RealmController realmController = RealmController.getInstance(this);
+        currentWorkout = realmController.getWorkout(prefs.getIntPref(UserPrefs.CURRENT_WORKOUT, 0));
+        currentExercise = currentWorkout.getExercises().first();
         sendExerciseBroadcast();
+        preferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if (key.equals(UserPrefs.CURRENT_WORKOUT)) {
+                    currentWorkout = realmController.getWorkout(prefs.getIntPref(UserPrefs.CURRENT_WORKOUT, 0));
+                    fullReset();
+                }
+            }
+        };
+        prefs.addOnPreferenceChange(preferenceChangeListener);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        UserPrefs.getInstance(this).removeOnPreferenceChange(preferenceChangeListener);
     }
 
     @Override
@@ -135,9 +157,9 @@ public class TimerService extends Service {
             case ACTION_START_TIMER: {
                 Log.d("FORSERVICE", "ACTION_START_TIMER");
                 sendSimpleBroadcast(TIMER_STARTED);
-                started = true;
-                paused = false;
+                resetWorkout();
                 timePassed = -1;
+                started = true;
                 timerHandler.postDelayed(timerRunnable, 0);
                 break;
             }
@@ -166,15 +188,26 @@ public class TimerService extends Service {
         return START_STICKY;
     }
 
+    private void resetWorkout() {
+        currentExercise = currentWorkout.getExercises().first();
+        started = false;
+        paused = false;
+    }
+
+    private void fullReset() {
+        resetWorkout();
+        sendExerciseBroadcast();
+        showStartNotification();
+        sendSimpleBroadcast(TIMER_STOPPED);
+    }
+
     private void stopTimer(boolean reset) {
         sendSimpleBroadcast(TIMER_STOPPED);
         started = false;
         paused = false;
         timePassed = 0;
-        // reset exercise
         if (reset) {
-            sendExerciseBroadcast();
-            showStartNotification();
+            fullReset();
         }
     }
 

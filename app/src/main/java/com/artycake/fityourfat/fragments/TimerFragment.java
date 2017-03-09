@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.artycake.fityourfat.R;
+import com.artycake.fityourfat.activities.MainActivity;
 import com.artycake.fityourfat.services.TimerService;
 import com.github.lzyzsd.circleprogress.DonutProgress;
 
@@ -29,8 +30,12 @@ public class TimerFragment extends Fragment {
 
     @BindView(R.id.exercise_name)
     TextView exerciseName;
+    @BindView(R.id.laps)
+    TextView laps;
     @BindView(R.id.timer_text)
     TextView timerText;
+    @BindView(R.id.description)
+    TextView description;
     @BindView(R.id.timer_progress)
     DonutProgress timerProgress;
     @BindView(R.id.start_stop_btn)
@@ -100,6 +105,11 @@ public class TimerFragment extends Fragment {
         exerciseName.setText(intent.getStringExtra(TimerService.UE_NAME));
         timerProgress.setProgress(intent.getIntExtra(TimerService.UE_PERCENT, 0));
         timerText.setText(intent.getStringExtra(TimerService.UE_TIME));
+        description.setText(intent.getStringExtra(TimerService.UE_DESC));
+        String lapString = getResources().getString(R.string.laps,
+                intent.getIntExtra(TimerService.UE_CURRENT_LAP, 0),
+                intent.getIntExtra(TimerService.UE_LAPS, 0));
+        laps.setText(lapString);
     }
 
     @Override
@@ -153,5 +163,15 @@ public class TimerFragment extends Fragment {
         } else {
             setAction(TimerService.ACTION_PAUSE_TIMER);
         }
+    }
+
+    @OnClick(R.id.to_workouts)
+    void toWorkouts() {
+        ((MainActivity) getActivity()).toWorkouts();
+    }
+
+    @OnClick(R.id.action_settings)
+    void openSettings() {
+        // start settings activity
     }
 }

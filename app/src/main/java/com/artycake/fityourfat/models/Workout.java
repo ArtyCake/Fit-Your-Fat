@@ -1,15 +1,22 @@
 package com.artycake.fityourfat.models;
 
+import android.content.Context;
+
+import com.artycake.fityourfat.utils.RealmController;
+
 import io.realm.RealmList;
 import io.realm.RealmObject;
 import io.realm.annotations.Ignore;
 import io.realm.annotations.PrimaryKey;
+import io.realm.annotations.Required;
 
 /**
  * Created by artycake on 3/8/17.
  */
 
 public class Workout extends RealmObject {
+    @PrimaryKey
+    private int id;
     private String name;
     private int warmUpTime = 0;
     private int laps;
@@ -47,6 +54,14 @@ public class Workout extends RealmObject {
 
     public void setExercises(RealmList<Exercise> exercises) {
         this.exercises = exercises;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public Exercise nextExercise() {
