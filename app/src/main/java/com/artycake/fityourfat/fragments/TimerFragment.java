@@ -30,6 +30,8 @@ public class TimerFragment extends Fragment {
 
     @BindView(R.id.exercise_name)
     TextView exerciseName;
+    @BindView(R.id.workout_name)
+    TextView workoutName;
     @BindView(R.id.laps)
     TextView laps;
     @BindView(R.id.timer_text)
@@ -93,12 +95,16 @@ public class TimerFragment extends Fragment {
                         tick(intent);
                         break;
                     }
+                    case TimerService.WORKOUT_CHANGED: {
+                        workoutName.setText(intent.getStringExtra(TimerService.WORKOUT_NAME));
+                        break;
+                    }
                 }
             }
         };
-        startService();
         IntentFilter filter = new IntentFilter(TimerService.BROADCAST_FILTER);
         getActivity().registerReceiver(receiver, filter);
+        startService();
     }
 
     private void tick(Intent intent) {

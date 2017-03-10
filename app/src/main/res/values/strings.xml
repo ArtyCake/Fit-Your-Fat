@@ -17,5 +17,10 @@
     <string name="action_save">Save</string>
     <string name="form_err_required">All fields should be filled</string>
     <string name="form_err_exercises">You should add at least one exercise</string>
+    <string name="form_err_name_required">Exercise name should be filled</string>
     <string name="workouts_title">Workouts</string>
+    <string name="form_exercise_name">Exercise name</string>
+    <string name="form_exercise_desc">Description</string>
+    <string name="form_exercises_time">Duration</string>
+    <string name="form_err_duration">Duration shiuold be more than 0</string>
 </resources>

@@ -1,7 +1,10 @@
 package com.artycake.fityourfat.activities;
 
+import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,6 +17,8 @@ import android.widget.EditText;
 
 import com.artycake.fityourfat.R;
 import com.artycake.fityourfat.adapters.ExercisesAdapter;
+import com.artycake.fityourfat.fragments.ExerciseFormFragment;
+import com.artycake.fityourfat.fragments.WorkoutFormFragment;
 import com.artycake.fityourfat.models.Exercise;
 import com.artycake.fityourfat.models.Workout;
 import com.artycake.fityourfat.utils.RealmController;
@@ -28,18 +33,15 @@ import io.realm.Realm;
 
 public class WorkoutFormActivity extends AppCompatActivity {
 
-    @BindView(R.id.workout_name)
-    EditText workoutName;
-    @BindView(R.id.workout_laps)
-    EditText workoutLaps;
-    @BindView(R.id.exercises)
-    RecyclerView exercisesList;
-    @BindView(android.R.id.content)
-    View rootView;
+    @BindView(R.id.add_exercise)
+    FloatingActionButton addExercise;
 
-    private ExercisesAdapter adapter;
     private List<Exercise> exercises = new ArrayList<>();
+    private FragmentManager fragmentManager;
     private Workout workout;
+    private WorkoutFormFragment workoutFormFragment;
+    private ExerciseFormFragment exerciseFormFragment;
+    private boolean inExercise = false;
 
     public static final String ID = "id";
 
@@ -48,23 +50,27 @@ public class WorkoutFormActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_workout_form);
         ButterKnife.bind(this);
+        fragmentManager = getSupportFragmentManager();
         int workoutId = getIntent().getIntExtra(ID, -1);
         if (workoutId != -1) {
             workout = RealmController.getInstance(this).getWorkout(workoutId);
             exercises = workout.getExercises();
-            Log.d("TAG", String.valueOf(exercises.size()));
-            workoutName.setText(workout.getName());
-            workoutLaps.setText(String.valueOf(workout.getLaps()));
+            getSupportActionBar().setTitle(workout.getName());
         } else {
-            workout = RealmController.getInstance(this).getRealm()
-                    .createObject(Workout.class, RealmController.getInstance(this).getNewWorkoutId());
+            workout = new Workout();
+            workout.setId(RealmController.getInstance(this).getNewWorkoutId());
+            getSupportActionBar().setTitle("Add new workout");
         }
-
-        adapter = new ExercisesAdapter(exercises);
-        exercisesList.setAdapter(adapter);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        exercisesList.setLayoutManager(layoutManager);
+        workoutFormFragment = (WorkoutFormFragment) fragmentManager.findFragmentById(R.id.container);
+        if (workoutFormFragment == null) {
+            workoutFormFragment = new WorkoutFormFragment();
+            workoutFormFragment.setWorkout(workout);
+            fragmentManager.beginTransaction().add(R.id.container, workoutFormFragment).commit();
+        } else {
+            workoutFormFragment = new WorkoutFormFragment();
+            workoutFormFragment.setWorkout(workout);
+            fragmentManager.beginTransaction().replace(R.id.container, workoutFormFragment).commit();
+        }
     }
 
     @Override
@@ -76,38 +82,84 @@ public class WorkoutFormActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_save) {
-            updateWorkout();
+            if (inExercise) {
+                storeExercise();
+            } else {
+                updateWorkout();
+            }
             return true;
+        }
+        if (item.getItemId() == android.R.id.home) {
+            if (fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack();
+                inExercise = false;
+                addExercise.show();
+                return true;
+            }
         }
         return super.onOptionsItemSelected(item);
     }
 
+    private void storeExercise() {
+        if (exerciseFormFragment.validate()) {
+            Exercise exercise = exerciseFormFragment.getExercise();
+            boolean found = false;
+            int index = 0;
+            for (int i = 0; i < exercises.size(); i++) {
+                if (exercises.get(i).getId() == exercise.getId()) {
+                    index = i;
+                    found = true;
+                }
+            }
+            if (!found) {
+                exercises.add(exercise);
+            } else {
+                exercises.set(index, exercise);
+            }
+            fragmentManager.popBackStack();
+            workoutFormFragment.updateExercises(exercises);
+            inExercise = false;
+            addExercise.show();
+        }
+    }
+
+    public void openExercise(Exercise exercise) {
+        exerciseFormFragment = new ExerciseFormFragment();
+        exerciseFormFragment.setExercise(exercise);
+        fragmentManager.beginTransaction()
+                .replace(R.id.container, exerciseFormFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                .addToBackStack(exercise.getName())
+                .commit();
+        inExercise = true;
+        addExercise.hide();
+    }
+
     private void updateWorkout() {
-        final String name = workoutName.getText().toString();
-        String lapsValue = workoutLaps.getText().toString();
-        if (name.isEmpty() || lapsValue.isEmpty()) {
-            Snackbar.make(rootView, R.string.form_err_required, Snackbar.LENGTH_LONG).show();
-            return;
+        if (workoutFormFragment.validate()) {
+            final Workout workout = workoutFormFragment.getWorkout();
+            workout.getExercises().clear();
+            workout.getExercises().addAll(exercises);
+            RealmController.getInstance(this).getRealm()
+                    .executeTransaction(new Realm.Transaction() {
+                        @Override
+                        public void execute(Realm realm) {
+                            realm.copyToRealmOrUpdate(workout);
+                        }
+                    });
+            finish();
         }
-        if (exercises.size() == 0) {
-            Snackbar.make(rootView, R.string.form_err_exercises, Snackbar.LENGTH_LONG).show();
-            return;
-        }
-        final int laps = Integer.valueOf(lapsValue);
-        RealmController.getInstance(this).getRealm()
-                .executeTransaction(new Realm.Transaction() {
-                    @Override
-                    public void execute(Realm realm) {
-                        workout.setName(name);
-                        workout.setLaps(laps);
-                        workout.getExercises().clear();
-                        workout.getExercises().addAll(exercises);
-                    }
-                });
     }
 
     @OnClick(R.id.add_exercise)
     public void addExercise() {
-        // start activity;
+        exerciseFormFragment = new ExerciseFormFragment();
+        fragmentManager.beginTransaction()
+                .replace(R.id.container, exerciseFormFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                .addToBackStack("New Exercise")
+                .commit();
+        inExercise = true;
+        addExercise.hide();
     }
 }

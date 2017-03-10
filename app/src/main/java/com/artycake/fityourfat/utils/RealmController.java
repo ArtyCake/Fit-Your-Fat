@@ -2,6 +2,7 @@ package com.artycake.fityourfat.utils;
 
 import android.content.Context;
 
+import com.artycake.fityourfat.models.Exercise;
 import com.artycake.fityourfat.models.Workout;
 
 import java.util.List;
@@ -40,8 +41,8 @@ public class RealmController {
         return realm;
     }
 
-    public Workout getWorkout(int id) {
-        return realm.where(Workout.class).equalTo("id", id).findFirst();
+    public Workout getWorkout(int workoutId) {
+        return realm.copyFromRealm(getRealmWorkout(workoutId));
     }
 
     public RealmResults<Workout> getWorkouts() {
@@ -54,5 +55,35 @@ public class RealmController {
             return 1;
         }
         return workouts.first().getId() + 1;
+    }
+
+    public int getNewExerciseId() {
+        RealmResults<Exercise> exercises = realm.where(Exercise.class).findAllSorted("id", Sort.DESCENDING);
+        if (exercises.size() == 0) {
+            return 1;
+        }
+        return exercises.first().getId() + 1;
+    }
+
+    public void deleteWorkout(final Workout workout) {
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                realm.where(Workout.class).equalTo("id", workout.getId()).findFirst().deleteFromRealm();
+            }
+        });
+    }
+
+    public Exercise getExercise(int exerciseId) {
+        Exercise exercise = realm.where(Exercise.class).equalTo("id", exerciseId).findFirst();
+        return realm.copyFromRealm(exercise);
+    }
+
+    public Workout getRealmWorkout(int workoutId) {
+        return realm.where(Workout.class).equalTo("id", workoutId).findFirst();
+    }
+
+    public Workout getFirstWorkout() {
+        return realm.where(Workout.class).findFirst();
     }
 }

@@ -21,6 +21,8 @@ import com.artycake.fityourfat.utils.RealmController;
 import com.artycake.fityourfat.utils.TextHelper;
 import com.artycake.fityourfat.utils.UserPrefs;
 
+import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmList;
 
 /**
@@ -42,6 +44,7 @@ public class TimerService extends Service {
     public static final String TIMER_STOPPED = "timer_stopped";
     public static final String TIMER_PAUSED = "timer_paused";
     public static final String TIMER_RESUMED = "timer_resumed";
+    public static final String WORKOUT_CHANGED = "workout_changed";
     public static final String UPDATE_EXERCISE = "update_exercise";
     public static final String UE_NAME = "ue_name";
     public static final String UE_TIME = "ue_time";
@@ -49,6 +52,7 @@ public class TimerService extends Service {
     public static final String UE_PERCENT = "ue_percent";
     public static final String UE_LAPS = "ue_laps";
     public static final String UE_CURRENT_LAP = "ue_current_lap";
+    public static final String WORKOUT_NAME = "workout_name";
 
     private TimerBinder timerBinder;
     private Handler timerHandler = new Handler();
@@ -61,6 +65,7 @@ public class TimerService extends Service {
     private int pauseDiff;
     private long lastTimerTime;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
+    private RealmChangeListener<Realm> realmChangeListener;
 
     private Runnable timerRunnable = new Runnable() {
 
@@ -127,11 +132,32 @@ public class TimerService extends Service {
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
                 if (key.equals(UserPrefs.CURRENT_WORKOUT)) {
                     currentWorkout = realmController.getWorkout(prefs.getIntPref(UserPrefs.CURRENT_WORKOUT, 0));
-                    fullReset();
+                    stopTimer(true);
+                    notifyWorkoutChanged();
                 }
             }
         };
         prefs.addOnPreferenceChange(preferenceChangeListener);
+        realmController.getRealm().addChangeListener(new RealmChangeListener<Realm>() {
+            @Override
+            public void onChange(Realm realm) {
+                Workout workout = realmController.getWorkout(currentWorkout.getId());
+                if (workout == null) {
+                    currentWorkout = realmController.getFirstWorkout();
+                } else {
+                    currentWorkout = workout;
+                }
+                stopTimer(true);
+                notifyWorkoutChanged();
+            }
+        });
+    }
+
+    private void notifyWorkoutChanged() {
+        Intent intent = new Intent(BROADCAST_FILTER);
+        intent.putExtra(ACTION_TYPE, WORKOUT_CHANGED);
+        intent.putExtra(WORKOUT_NAME, currentWorkout.getName());
+        sendBroadcast(intent);
     }
 
     @Override
@@ -289,6 +315,7 @@ public class TimerService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        notifyWorkoutChanged();
         return timerBinder;
     }
 

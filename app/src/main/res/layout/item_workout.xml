@@ -39,4 +39,14 @@
         android:background="@android:color/transparent"
         android:src="@drawable/ic_settings"
         />
+
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/workout_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_delete"
+        />
 </LinearLayout>

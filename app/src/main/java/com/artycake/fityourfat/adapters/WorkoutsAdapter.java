@@ -40,6 +40,14 @@ public class WorkoutsAdapter extends RecyclerView.Adapter<WorkoutHolder> {
                 }
             }
         });
+        holder.setOnDeleteClick(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (onItemClick != null) {
+                    onItemClick.onDeleteClick(workouts.get(holder.getAdapterPosition()));
+                }
+            }
+        });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -61,6 +69,8 @@ public class WorkoutsAdapter extends RecyclerView.Adapter<WorkoutHolder> {
 
     public interface OnItemClick {
         void onEditClick(Workout workout);
+
+        void onDeleteClick(Workout workout);
 
         void onClick(Workout workout);
     }

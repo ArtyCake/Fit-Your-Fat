@@ -17,11 +17,13 @@ import com.artycake.fityourfat.models.Workout;
 import com.artycake.fityourfat.utils.RealmController;
 import com.artycake.fityourfat.utils.UserPrefs;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.realm.Realm;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -30,7 +32,7 @@ public class WorkoutsFragment extends Fragment {
     @BindView(R.id.workouts_list)
     RecyclerView workoutsList;
 
-    private List<Workout> workouts;
+    private List<Workout> workouts = new ArrayList<>();
     private WorkoutsAdapter adapter;
 
     public WorkoutsFragment() {
@@ -41,7 +43,7 @@ public class WorkoutsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_workouts, container, false);
         ButterKnife.bind(this, view);
-        workouts = RealmController.getInstance(getContext()).getWorkouts();
+        workouts.addAll(RealmController.getInstance(getContext()).getWorkouts());
         adapter = new WorkoutsAdapter(workouts);
         adapter.setOnItemClick(new WorkoutsAdapter.OnItemClick() {
             @Override
@@ -49,6 +51,12 @@ public class WorkoutsFragment extends Fragment {
                 Intent intent = new Intent(getActivity(), WorkoutFormActivity.class);
                 intent.putExtra(WorkoutFormActivity.ID, workout.getId());
                 startActivity(intent);
+            }
+
+            @Override
+            public void onDeleteClick(final Workout workout) {
+                RealmController.getInstance(getContext()).deleteWorkout(workout);
+                workouts.remove(workout);
             }
 
             @Override
@@ -67,5 +75,13 @@ public class WorkoutsFragment extends Fragment {
     @OnClick(R.id.action_add)
     public void add() {
         startActivity(new Intent(getActivity(), WorkoutFormActivity.class));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        workouts.clear();
+        workouts.addAll(RealmController.getInstance(getContext()).getWorkouts());
+        adapter.notifyDataSetChanged();
     }
 }

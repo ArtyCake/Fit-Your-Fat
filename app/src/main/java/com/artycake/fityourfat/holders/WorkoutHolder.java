@@ -22,6 +22,8 @@ public class WorkoutHolder extends RecyclerView.ViewHolder {
     TextView workoutLaps;
     @BindView(R.id.workout_edit)
     ImageButton workoutEdit;
+    @BindView(R.id.workout_delete)
+    ImageButton workoutDelete;
 
     public WorkoutHolder(View itemView) {
         super(itemView);
@@ -35,5 +37,9 @@ public class WorkoutHolder extends RecyclerView.ViewHolder {
 
     public void setOnEditClick(View.OnClickListener onEditClick) {
         workoutEdit.setOnClickListener(onEditClick);
+    }
+
+    public void setOnDeleteClick(View.OnClickListener onDeleteClick) {
+        workoutDelete.setOnClickListener(onDeleteClick);
     }
 }

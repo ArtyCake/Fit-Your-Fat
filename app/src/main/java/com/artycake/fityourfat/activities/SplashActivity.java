@@ -27,19 +27,20 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void createDemoWorkout() {
-        Realm realm = RealmController.getInstance(this).getRealm();
+        final RealmController controller = RealmController.getInstance(this);
+        Realm realm = controller.getRealm();
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
-                Workout workout = realm.createObject(Workout.class, RealmController.getInstance(SplashActivity.this).getNewWorkoutId());
+                Workout workout = realm.createObject(Workout.class, controller.getNewWorkoutId());
                 workout.setName("Tabata");
                 workout.setLaps(8);
                 workout.setWarmUpTime(0);
-                Exercise exercise = new Exercise();
+                Exercise exercise = realm.createObject(Exercise.class, controller.getNewExerciseId());
                 exercise.setName("Work");
                 exercise.setDuration(20);
                 workout.getExercises().add(exercise);
-                Exercise secondExercise = new Exercise();
+                Exercise secondExercise = realm.createObject(Exercise.class, controller.getNewExerciseId());
                 secondExercise.setName("Rest");
                 secondExercise.setDuration(10);
                 workout.getExercises().add(secondExercise);
