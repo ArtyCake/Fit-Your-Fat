@@ -48,18 +48,21 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:focusable="true"
         android:gravity="center"
         android:orientation="horizontal">
 
         <com.aigestudio.wheelpicker.WheelPicker
             android:id="@+id/minutes"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
             app:wheel_atmospheric="true"
             app:wheel_curved="true"
             app:wheel_cyclic="true"
+            app:wheel_item_align="right"
             app:wheel_same_width="true"
-            android:layout_margin="10dp"
             app:wheel_selected_item_text_color="@color/colorAccent"/>
 
         <TextView
@@ -71,12 +74,14 @@
 
         <com.aigestudio.wheelpicker.WheelPicker
             android:id="@+id/seconds"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:layout_weight="1"
             app:wheel_atmospheric="true"
             app:wheel_curved="true"
             app:wheel_cyclic="true"
+            app:wheel_item_align="left"
             app:wheel_selected_item_text_color="@color/colorAccent"/>
 
     </LinearLayout>

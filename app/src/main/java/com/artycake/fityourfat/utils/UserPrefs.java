@@ -15,6 +15,23 @@ public class UserPrefs {
 
     public static final String FIRST_LAUNCH = "first_launch";
     public static final String CURRENT_WORKOUT = "current_workout";
+    public static final String KEEP_SCREEN_ON = "keep_screen_on";
+    public static final String PAUSE_ON_CALL = "pause_on_call";
+    public static final String SOUNDS_ON = "sounds_on";
+    public static final String SOUNDS_WORKOUT_FINISH = "sounds_workout_finish";
+    public static final String SOUNDS_EXERCISE_FINISH = "sounds_exercise_finish";
+    public static final String VOICE_ON = "voice_on";
+    public static final String VOICE_COUNTDOWN = "voice_countdown";
+    public static final String VOICE_HALF = "voice_half";
+    public static final String VOICE_EXERCISE_NAME = "voice_exercise_name";
+    public static final String VIBRATE_ON = "vibrate_on";
+    public static final String VIBRATE_HALF = "vibrate_half";
+    public static final String VIBRATE_WORKOUT_FINISH = "vibrate_workout_finish";
+    public static final String VIBRATE_EXERCISE_FINISH = "vibrate_exercise_finish";
+    public static final String VIBRATE_COUNTDOWN = "vibrate_countdown";
+    public static final String ASK_FOR_RATE = "ask_for_rate";
+    public static final String STOPS_FROM_LAST = "stops_from_last";
+    public static final int STOPS_FOR_RATE = 15;
 
     public static UserPrefs getInstance(Context context) {
         if (instance == null) {

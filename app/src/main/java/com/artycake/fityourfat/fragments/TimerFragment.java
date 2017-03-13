@@ -1,15 +1,19 @@
 package com.artycake.fityourfat.fragments;
 
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +23,9 @@ import android.widget.TextView;
 
 import com.artycake.fityourfat.R;
 import com.artycake.fityourfat.activities.MainActivity;
+import com.artycake.fityourfat.activities.SettingsActivity;
 import com.artycake.fityourfat.services.TimerService;
+import com.artycake.fityourfat.utils.UserPrefs;
 import com.github.lzyzsd.circleprogress.DonutProgress;
 
 import butterknife.BindView;
@@ -61,6 +67,7 @@ public class TimerFragment extends Fragment {
             public void onServiceConnected(ComponentName name, IBinder binder) {
                 bound = true;
                 timerService = ((TimerService.TimerBinder) binder).getService();
+                Log.d("TAG", "Bound service");
             }
 
             @Override
@@ -71,6 +78,7 @@ public class TimerFragment extends Fragment {
         receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Log.d("TAG", intent.getStringExtra(TimerService.ACTION_TYPE));
                 switch (intent.getStringExtra(TimerService.ACTION_TYPE)) {
                     case TimerService.TIMER_STARTED: {
                         startStopBtn.setText(R.string.main_stop_btn);
@@ -99,10 +107,14 @@ public class TimerFragment extends Fragment {
                         workoutName.setText(intent.getStringExtra(TimerService.WORKOUT_NAME));
                         break;
                     }
+                    case TimerService.SERVICE_STOPPED: {
+                        getActivity().finishAffinity();
+                        break;
+                    }
                 }
             }
         };
-        IntentFilter filter = new IntentFilter(TimerService.BROADCAST_FILTER);
+        IntentFilter filter = new IntentFilter(TimerService.BROADCAST_UI_FILTER);
         getActivity().registerReceiver(receiver, filter);
         startService();
     }
@@ -121,8 +133,8 @@ public class TimerFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        getActivity().unregisterReceiver(receiver);
         getActivity().unbindService(connection);
+        getActivity().unregisterReceiver(receiver);
     }
 
     @Override
@@ -153,9 +165,52 @@ public class TimerFragment extends Fragment {
         Log.d("FORSERVICE", String.valueOf(timerService.isStarted()));
         if (timerService.isStarted()) {
             setAction(TimerService.ACTION_STOP_TIMER);
+            askForRate();
         } else {
             setAction(TimerService.ACTION_START_TIMER);
         }
+    }
+
+    private void askForRate() {
+        final UserPrefs userPrefs = UserPrefs.getInstance(getContext());
+        if (!userPrefs.getBoolPref(UserPrefs.ASK_FOR_RATE, true)) {
+            return;
+        }
+        int stopsFromLast = userPrefs.getIntPref(UserPrefs.STOPS_FROM_LAST, 0);
+        stopsFromLast++;
+        if (stopsFromLast < UserPrefs.STOPS_FOR_RATE) {
+            userPrefs.putPreferences(UserPrefs.STOPS_FROM_LAST, stopsFromLast);
+            return;
+        }
+        userPrefs.putPreferences(UserPrefs.STOPS_FROM_LAST, 0);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AppTheme_Dialog);
+        builder.setTitle(getResources().getString(R.string.rate_dialog_title, getResources().getString(R.string.app_name)));
+        builder.setMessage(R.string.rate_dialog_message);
+        builder.setPositiveButton(R.string.rate_dialog_rate, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getActivity().getPackageName())));
+                } catch (ActivityNotFoundException e) {
+                    e.printStackTrace();
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton(R.string.rate_dialog_never, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                userPrefs.putPreferences(UserPrefs.ASK_FOR_RATE, false);
+                dialog.dismiss();
+            }
+        });
+        builder.setNeutralButton(R.string.rate_dialog_later, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.create().show();
     }
 
     @OnClick(R.id.pause_btn)
@@ -178,6 +233,6 @@ public class TimerFragment extends Fragment {
 
     @OnClick(R.id.action_settings)
     void openSettings() {
-        // start settings activity
+        startActivity(new Intent(getActivity(), SettingsActivity.class));
     }
 }

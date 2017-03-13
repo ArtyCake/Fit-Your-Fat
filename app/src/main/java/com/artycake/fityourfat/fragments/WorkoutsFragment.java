@@ -55,8 +55,8 @@ public class WorkoutsFragment extends Fragment {
 
             @Override
             public void onDeleteClick(final Workout workout) {
-                RealmController.getInstance(getContext()).deleteWorkout(workout);
                 workouts.remove(workout);
+                RealmController.getInstance(getContext()).deleteWorkout(workout);
             }
 
             @Override

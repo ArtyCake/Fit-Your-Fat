@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/pref_category_main">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="sounds_on"
+            android:title="@string/pref_play_sounds_title"/>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="voice_on"
+            android:title="@string/pref_play_voice_title"
+            />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="vibrate_on"
+            android:title="@string/pref_vibrate_title"/>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="pause_on_call"
+            android:summary="@string/pref_pause_on_call_summary"
+            android:title="@string/pref_pause_on_call_title"
+            />
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="keep_screen_on"
+            android:summary="@string/pref_screen_on_summary"
+            android:title="@string/pref_screen_on_title"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_category_sound">
+        <SwitchPreference
+            android:key="sounds_exercise_finish"
+            android:title="@string/pref_exercise_finish_title"
+            />
+        <SwitchPreference
+            android:key="sounds_workout_finish"
+            android:title="@string/pref_workout_finish_title"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_category_voice">
+        <SwitchPreference
+            android:key="voice_half"
+            android:title="@string/pref_exercise_half_title"/>
+        <SwitchPreference
+            android:key="voice_countdown"
+            android:title="@string/pref_countdown_title"/>
+        <SwitchPreference
+            android:key="voice_exercise_name"
+            android:title="@string/pref_exercise_name_title"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_category_vibration">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="vibrate_exercise_finish"
+            android:title="@string/pref_exercise_finish_title"/>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="vibrate_workout_finish"
+            android:title="@string/pref_workout_finish_title"/>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="vibrate_half"
+            android:title="@string/pref_exercise_half_title"/>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="vibrate_countdown"
+            android:title="@string/pref_countdown_title"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_category_other">
+        <Preference
+            android:summary="@string/pref_about_summary"
+            android:title="@string/app_name">
+            <intent android:action="com.artycake.fityourfat.action.openabout"/>
+        </Preference>
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -42,8 +42,8 @@ public class WorkoutFormActivity extends AppCompatActivity {
     private WorkoutFormFragment workoutFormFragment;
     private ExerciseFormFragment exerciseFormFragment;
     private boolean inExercise = false;
-
     public static final String ID = "id";
+    private int newExerciseId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +59,7 @@ public class WorkoutFormActivity extends AppCompatActivity {
         } else {
             workout = new Workout();
             workout.setId(RealmController.getInstance(this).getNewWorkoutId());
-            getSupportActionBar().setTitle("Add new workout");
+            getSupportActionBar().setTitle(R.string.new_workout_title);
         }
         workoutFormFragment = (WorkoutFormFragment) fragmentManager.findFragmentById(R.id.container);
         if (workoutFormFragment == null) {
@@ -137,14 +137,15 @@ public class WorkoutFormActivity extends AppCompatActivity {
 
     private void updateWorkout() {
         if (workoutFormFragment.validate()) {
+            exercises = workoutFormFragment.getExercises();
             final Workout workout = workoutFormFragment.getWorkout();
-            workout.getExercises().clear();
-            workout.getExercises().addAll(exercises);
             RealmController.getInstance(this).getRealm()
                     .executeTransaction(new Realm.Transaction() {
                         @Override
                         public void execute(Realm realm) {
-                            realm.copyToRealmOrUpdate(workout);
+                            Workout storedWorkout = realm.copyToRealmOrUpdate(workout);
+                            storedWorkout.getExercises().clear();
+                            storedWorkout.getExercises().addAll(exercises);
                         }
                     });
             finish();
@@ -154,6 +155,14 @@ public class WorkoutFormActivity extends AppCompatActivity {
     @OnClick(R.id.add_exercise)
     public void addExercise() {
         exerciseFormFragment = new ExerciseFormFragment();
+        if (newExerciseId == -1) {
+            newExerciseId = RealmController.getInstance(this).getNewExerciseId();
+        } else {
+            newExerciseId++;
+        }
+        Exercise exercise = new Exercise();
+        exercise.setId(newExerciseId);
+        exerciseFormFragment.setExercise(exercise);
         fragmentManager.beginTransaction()
                 .replace(R.id.container, exerciseFormFragment)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)

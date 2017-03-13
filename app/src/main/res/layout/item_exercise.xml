@@ -6,13 +6,24 @@
               android:layout_marginBottom="4dp"
               android:background="@color/colorExerciseBackground"
               android:orientation="horizontal"
-              android:padding="5dp">
+              android:paddingBottom="5dp"
+              android:paddingLeft="10dp"
+              android:paddingRight="10dp"
+              android:paddingTop="5dp"
+    >
 
+    <android.support.v7.widget.AppCompatImageView
+        android:id="@+id/drag_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_drag"/>
     <TextView
         android:id="@+id/exercise_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:textAppearance="@style/TextAppearance.AppCompat.Title"
         tools:text="Work"/>
 
