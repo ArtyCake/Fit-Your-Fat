@@ -56,6 +56,7 @@ public class WorkoutsAdapter extends RecyclerView.Adapter<WorkoutHolder> {
                 }
             }
         });
+        holder.enableDelete(getItemCount() > 1);
     }
 
     @Override

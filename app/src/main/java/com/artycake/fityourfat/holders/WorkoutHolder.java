@@ -42,4 +42,8 @@ public class WorkoutHolder extends RecyclerView.ViewHolder {
     public void setOnDeleteClick(View.OnClickListener onDeleteClick) {
         workoutDelete.setOnClickListener(onDeleteClick);
     }
+
+    public void enableDelete(boolean enable) {
+        workoutDelete.setEnabled(enable);
+    }
 }

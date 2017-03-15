@@ -35,7 +35,7 @@
     <string name="pref_exercise_finish_title">Конец упражнения</string>
     <string name="pref_exercise_half_title">Половина упражнения</string>
     <string name="pref_exercise_name_title">Название упражнения</string>
-    <string name="pref_pause_on_call_summary">Приоставнавливать тренировку во время звонков и возобновлять после их завершения</string>
+    <string name="pref_pause_on_call_summary">Приоставнавливать тренировку во время входящего звонка и возобновлять после его завершения</string>
     <string name="pref_pause_on_call_title">Пауза при звонках</string>
     <string name="pref_play_sounds_title">Воспроизводить звуки</string>
     <string name="pref_play_voice_title">Воспроизводить голос</string>
@@ -53,4 +53,8 @@
     <string name="rate_text_rate">оцените это приложение</string>
     <string name="workout_laps">Кругов: %d</string>
     <string name="workouts_title">Тренировки</string>
+    <string name="new_workout_title">Новая тренировка</string>
+    <string name="permission_phone_state">Разрешение необходимо, чтобы останавливать таймер во время звонка</string>
+    <string name="permissions_grant">Разрешить</string>
+    <string name="permissions_ok">ОК</string>
 </resources>

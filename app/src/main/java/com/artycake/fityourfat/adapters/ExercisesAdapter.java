@@ -50,7 +50,6 @@ public class ExercisesAdapter extends RecyclerView.Adapter<ExerciseHolder> imple
                 }
             }
         });
-        // Start a drag whenever the handle view it touched
         holder.dragIcon.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {

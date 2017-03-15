@@ -34,5 +34,5 @@
     <style name="AppTheme.Dialog" parent="Theme.AppCompat.Dialog.Alert">
         <item name="android:background">@color/colorWindowBackground</item>
     </style>
-
+    
 </resources>

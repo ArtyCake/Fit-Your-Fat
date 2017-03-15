@@ -1,6 +1,7 @@
 package com.artycake.fityourfat.activities;
 
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -19,11 +20,13 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         if (UserPrefs.getInstance(this).getBoolPref(UserPrefs.FIRST_LAUNCH, true)) {
             createDemoWorkout();
             UserPrefs.getInstance(this).putPreferences(UserPrefs.FIRST_LAUNCH, false);
         }
         startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 
     private void createDemoWorkout() {

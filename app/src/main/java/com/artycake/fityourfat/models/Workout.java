@@ -19,7 +19,7 @@ public class Workout extends RealmObject {
     private int id;
     private String name;
     private int warmUpTime = 0;
-    private int laps;
+    private int laps = 1;
     private RealmList<Exercise> exercises = new RealmList<>();
     @Ignore
     private int index = 0;
@@ -70,5 +70,10 @@ public class Workout extends RealmObject {
             return null;
         }
         return getExercises().get(index);
+    }
+
+    public Exercise firstExercise() {
+        index = 0;
+        return getExercises().first();
     }
 }

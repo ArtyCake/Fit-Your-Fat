@@ -104,7 +104,11 @@ public class TimerService extends Service {
         final UserPrefs prefs = UserPrefs.getInstance(this);
         final RealmController realmController = RealmController.getInstance(this);
         currentWorkout = realmController.getWorkout(prefs.getIntPref(UserPrefs.CURRENT_WORKOUT, 0));
-        currentExercise = currentWorkout.getExercises().first();
+        if (currentWorkout == null) {
+            currentWorkout = realmController.getFirstWorkout();
+            prefs.putPreferences(UserPrefs.CURRENT_WORKOUT, currentWorkout.getId());
+        }
+        currentExercise = currentWorkout.firstExercise();
         // Define and register change listeners
         preferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
@@ -123,6 +127,7 @@ public class TimerService extends Service {
                 Workout workout = realmController.getWorkout(currentWorkout.getId());
                 if (workout == null) {
                     currentWorkout = realmController.getFirstWorkout();
+                    prefs.putPreferences(UserPrefs.CURRENT_WORKOUT, currentWorkout.getId());
                 } else {
                     currentWorkout = workout;
                 }
@@ -153,6 +158,9 @@ public class TimerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            return START_STICKY;
+        }
         Log.d("TAG serv", String.valueOf(intent));
         Log.d("TAG serv", String.valueOf(intent.getAction()));
         switch (intent.getAction()) {
@@ -204,7 +212,7 @@ public class TimerService extends Service {
         notifyTick();
         started = false;
         paused = false;
-        currentExercise = currentWorkout.getExercises().first();
+        currentExercise = currentWorkout.firstExercise();
         currentLap = 1;
         timePassed = 0;
         if (reset) {
@@ -245,7 +253,7 @@ public class TimerService extends Service {
             if (next == null) {
                 if (currentLap < currentWorkout.getLaps()) {
                     currentLap++;
-                    currentExercise = currentWorkout.getExercises().first();
+                    currentExercise = currentWorkout.firstExercise();
                     timePassed = 0;
                     broadcastExercise();
                     notifyTick();

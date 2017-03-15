@@ -42,7 +42,11 @@ public class RealmController {
     }
 
     public Workout getWorkout(int workoutId) {
-        return realm.copyFromRealm(getRealmWorkout(workoutId));
+        Workout workout = getRealmWorkout(workoutId);
+        if (workout == null) {
+            return null;
+        }
+        return realm.copyFromRealm(workout);
     }
 
     public RealmResults<Workout> getWorkouts() {

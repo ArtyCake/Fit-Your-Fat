@@ -47,6 +47,6 @@
         android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
         android:background="@android:color/transparent"
-        android:src="@drawable/ic_delete"
+        android:src="@drawable/ic_delete_state"
         />
 </LinearLayout>

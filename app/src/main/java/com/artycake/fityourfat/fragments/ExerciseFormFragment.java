@@ -15,13 +15,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 
 import com.aigestudio.wheelpicker.WheelPicker;
 import com.artycake.fityourfat.R;
 import com.artycake.fityourfat.models.Exercise;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,10 +39,10 @@ public class ExerciseFormFragment extends Fragment {
     TextView exerciseName;
     @BindView(R.id.exercise_desc)
     TextView exerciseDesc;
-    @BindView(R.id.minutes)
-    WheelPicker minutesPicker;
-    @BindView(R.id.seconds)
-    WheelPicker secondsPicker;
+    @BindView(R.id.minutes_picker)
+    NumberPicker minutesNumberPicker;
+    @BindView(R.id.seconds_picker)
+    NumberPicker secondsNumberPicker;
 
     private Exercise exercise = new Exercise();
     private int lastMinutes = 0;
@@ -62,62 +63,23 @@ public class ExerciseFormFragment extends Fragment {
         for (int i = 0; i < 60; i++) {
             values.add(String.format(Locale.getDefault(), "%02d", i));
         }
-        minutesPicker.setData(values);
-        secondsPicker.setData(values);
-        minutesPicker.setOnItemSelectedListener(new WheelPicker.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(WheelPicker picker, Object data, int position) {
-                if (lastMinutes == position && !minutesScrolled) {
-                    openDialog(picker);
-                }
-                minutesScrolled = false;
-                lastMinutes = position;
-            }
-        });
-        minutesPicker.setOnWheelChangeListener(new WheelPicker.OnWheelChangeListener() {
-            @Override
-            public void onWheelScrolled(int offset) {
-                if (offset > 0) {
-                    minutesScrolled = true;
-                }
-            }
-
-            @Override
-            public void onWheelSelected(int position) {
-            }
-
-            @Override
-            public void onWheelScrollStateChanged(int state) {
-            }
-        });
-        secondsPicker.setOnItemSelectedListener(new WheelPicker.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(WheelPicker picker, Object data, int position) {
-                if (lastSeconds == position && !secondsScrolled) {
-                    openDialog(picker);
-                }
-                secondsScrolled = false;
-                lastSeconds = position;
-            }
-        });
-        secondsPicker.setOnWheelChangeListener(new WheelPicker.OnWheelChangeListener() {
-            @Override
-            public void onWheelScrolled(int offset) {
-                if (offset > 0) {
-                    secondsScrolled = true;
-                }
-            }
-
-            @Override
-            public void onWheelSelected(int position) {
-            }
-
-            @Override
-            public void onWheelScrollStateChanged(int state) {
-            }
-        });
+        setDurationPicker();
         updateUI();
         return rootView;
+    }
+
+    private void setDurationPicker() {
+        int maxValue = 59;
+        List<String> displayedValues = new ArrayList<String>();
+        for (int i = 0; i <= maxValue; i++) {
+            displayedValues.add(String.format(Locale.getDefault(), "%02d", i));
+        }
+        minutesNumberPicker.setMinValue(0);
+        minutesNumberPicker.setMaxValue(maxValue);
+        minutesNumberPicker.setDisplayedValues(displayedValues.toArray(new String[0]));
+        secondsNumberPicker.setMinValue(0);
+        secondsNumberPicker.setMaxValue(maxValue);
+        secondsNumberPicker.setDisplayedValues(displayedValues.toArray(new String[0]));
     }
 
     private void openDialog(final WheelPicker picker) {
@@ -156,8 +118,8 @@ public class ExerciseFormFragment extends Fragment {
         exerciseDesc.setText(exercise.getDescription());
         int minutes = exercise.getDuration() / 60;
         int seconds = exercise.getDuration() - minutes * 60;
-        minutesPicker.setSelectedItemPosition(minutes);
-        secondsPicker.setSelectedItemPosition(seconds);
+        minutesNumberPicker.setValue(minutes);
+        secondsNumberPicker.setValue(seconds);
     }
 
     public boolean validate() {
@@ -175,8 +137,8 @@ public class ExerciseFormFragment extends Fragment {
     }
 
     private int getDuration() {
-        int minutes = minutesPicker.getCurrentItemPosition();
-        int seconds = secondsPicker.getCurrentItemPosition();
+        int minutes = minutesNumberPicker.getValue();
+        int seconds = secondsNumberPicker.getValue();
         return minutes * 60 + seconds;
     }
 

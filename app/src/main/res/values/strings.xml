@@ -22,7 +22,7 @@
     <string name="pref_screen_on_title">Screen on</string>
     <string name="pref_screen_on_summary">Keep screen on while app is open</string>
     <string name="pref_pause_on_call_title">Pause on call</string>
-    <string name="pref_pause_on_call_summary">Pause workout on incoming or outgoing call and resume after it ends</string>
+    <string name="pref_pause_on_call_summary">Pause workout on incoming call and resume after it ends</string>
     <string name="pref_about_summary">About</string>
     <string name="pref_category_main">Main settings</string>
     <string name="pref_play_sounds_title">Play sounds</string>
@@ -55,4 +55,7 @@
     <string name="rate_dialog_later">Later</string>
     <string name="rate_dialog_message">If you like this app, please rate it. It will take few minutes</string>
     <string name="new_workout_title">Add new workout</string>
+    <string name="permission_phone_state">Permission is necessary to pause the timer during the call</string>
+    <string name="permissions_grant">Grant</string>
+    <string name="permissions_ok">OK</string>
 </resources>

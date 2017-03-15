@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -19,6 +20,7 @@ import com.artycake.fityourfat.services.TimerService;
 import com.artycake.fityourfat.utils.TextHelper;
 import com.artycake.fityourfat.utils.UserPrefs;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -32,12 +34,30 @@ public class TimerSoundReceiver extends BroadcastReceiver {
     private int defaultMusicVolume;
     private int defaultNotificationVolume;
 
+    private boolean released = true;
+
+    private static final String MESSAGE_ID = "timerService.messageId";
+
     public TimerSoundReceiver(final Context context) {
         userPrefs = UserPrefs.getInstance(context);
         vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        mediaPlayer = MediaPlayer.create(context, R.raw.beep);
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.reset();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
+        Uri myUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.beep);
+        try {
+            mediaPlayer.setDataSource(context, myUri);
+            mediaPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                Log.d("MediaPlayer", "player prepared");
+            }
+        });
         textToSpeech = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
@@ -58,7 +78,7 @@ public class TimerSoundReceiver extends BroadcastReceiver {
 
                     @Override
                     public void onError(String utteranceId) {
-
+                        releaseVolume();
                     }
                 });
             }
@@ -76,11 +96,10 @@ public class TimerSoundReceiver extends BroadcastReceiver {
         if (!userPrefs.getBoolPref(UserPrefs.SOUNDS_ON, false)) {
             return;
         }
-        prepareVolume();
         switch (intent.getStringExtra(TimerService.ACTION_TYPE)) {
             case TimerService.SOUND_WORKOUT_FINISHED: {
                 if (userPrefs.getBoolPref(UserPrefs.SOUNDS_WORKOUT_FINISH, false)) {
-                    Log.d("TAG", "playing beep 3 times");
+                    prepareVolume();
                     final int[] playedTimes = new int[]{0};
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
@@ -99,7 +118,8 @@ public class TimerSoundReceiver extends BroadcastReceiver {
             }
             case TimerService.SOUND_EXERCISE_FINISHED: {
                 if (userPrefs.getBoolPref(UserPrefs.SOUNDS_EXERCISE_FINISH, false)) {
-                    Log.d("TAG", "playing beep 1 time");
+                    prepareVolume();
+                    Log.d("TAG SOUND", "playing beep 1 time");
                     mediaPlayer.start();
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
@@ -114,11 +134,17 @@ public class TimerSoundReceiver extends BroadcastReceiver {
     }
 
     private void releaseVolume() {
+        Log.d("TAG SOUND", "volume released");
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, defaultMusicVolume, 0);
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, defaultNotificationVolume, 0);
+        released = true;
     }
 
     private void prepareVolume() {
+        if (!released) {
+            return;
+        }
+        released = false;
         defaultMusicVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         defaultNotificationVolume = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION);
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 10, 0);
@@ -136,12 +162,14 @@ public class TimerSoundReceiver extends BroadcastReceiver {
         HashMap<String, String> paramsMap = new HashMap<>();
         Bundle paramsBundle = new Bundle();
         paramsMap.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_NOTIFICATION));
+        paramsMap.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, MESSAGE_ID);
         paramsBundle.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_NOTIFICATION);
         switch (intent.getStringExtra(TimerService.ACTION_TYPE)) {
             case TimerService.SOUND_HALF: {
                 if (userPrefs.getBoolPref(UserPrefs.VOICE_HALF, false)) {
+                    prepareVolume();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        textToSpeech.speak("Half time", TextToSpeech.QUEUE_FLUSH, paramsBundle, null);
+                        textToSpeech.speak("Half time", TextToSpeech.QUEUE_FLUSH, paramsBundle, MESSAGE_ID);
                     } else {
                         textToSpeech.speak("Half time", TextToSpeech.QUEUE_FLUSH, paramsMap);
                     }
@@ -154,6 +182,7 @@ public class TimerSoundReceiver extends BroadcastReceiver {
                     if (number == -1) {
                         return;
                     }
+                    prepareVolume();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         textToSpeech.speak(String.valueOf(number), TextToSpeech.QUEUE_FLUSH, paramsBundle, null);
                     } else {
@@ -165,6 +194,7 @@ public class TimerSoundReceiver extends BroadcastReceiver {
             case TimerService.SOUND_EXERCISE_FINISHED: {
                 if (userPrefs.getBoolPref(UserPrefs.VOICE_EXERCISE_NAME, false)) {
                     String name = intent.getStringExtra(TimerService.EXERCISE_NAME);
+                    prepareVolume();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         textToSpeech.speak(name, TextToSpeech.QUEUE_FLUSH, paramsBundle, null);
                     } else {
