@@ -1,5 +1,5 @@
 # Fit Your Fat
-[Play Market](https://play.google.com/store/apps/details?id=com.artycake.fityourfat)
+[Play Market](https://play.google.com/store/apps/details?id=com.artycake.fityourfat) | [Demo video](https://youtu.be/A8gNM5Ku5Ew)
 
 A simple and convenient timer for your workouts.
 
